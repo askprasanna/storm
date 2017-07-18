@@ -66,7 +66,12 @@ public class KafkaSpoutRetryLimitTest {
                 .build();
 
         consumerMock = mock(KafkaConsumer.class);
-        KafkaConsumerFactory<String, String> consumerFactory = (kafkaSpoutConfig) -> consumerMock;
+        KafkaConsumerFactory<String, String> consumerFactory = new KafkaConsumerFactory<String, String>() {
+            @Override
+            public KafkaConsumer<String, String> createConsumer(KafkaSpoutConfig<String, String> kafkaSpoutConfig) {
+                return consumerMock;
+            }
+        };
 
         spout = new KafkaSpout<>(spoutConfig, consumerFactory);
 
@@ -102,7 +107,7 @@ public class KafkaSpoutRetryLimitTest {
             }
 
             ArgumentCaptor<KafkaSpoutMessageId> messageIds = ArgumentCaptor.forClass(KafkaSpoutMessageId.class);
-            verify(collectorMock, times(recordsForPartition.size())).emit(anyObject(), anyObject(), messageIds.capture());
+            verify(collectorMock, times(recordsForPartition.size())).emit(anyString(), anyList(), messageIds.capture());
 
             for (KafkaSpoutMessageId messageId : messageIds.getAllValues()) {
                 spout.fail(messageId);
